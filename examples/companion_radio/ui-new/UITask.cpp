@@ -643,7 +643,7 @@ class MsgPreviewScreen : public UIScreen {
     char origin[62];
     char msg[UI_MSG_PREVIEW_SIZE];
   };
-  #define MAX_UNREAD_MSGS   32
+  #define MAX_UNREAD_MSGS   128
   int num_unread;
   int head = MAX_UNREAD_MSGS - 1; // index of latest unread message
   MsgEntry unread[MAX_UNREAD_MSGS];
