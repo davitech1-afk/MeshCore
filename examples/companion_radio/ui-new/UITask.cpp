@@ -8,7 +8,7 @@
 #endif
 
 #ifndef AUTO_OFF_MILLIS
-  #define AUTO_OFF_MILLIS     15000   // 15 seconds
+  #define AUTO_OFF_MILLIS     15000   // 30 seconds
 #endif
 #define BOOT_SCREEN_MILLIS   3000   // 3 seconds
 
@@ -207,6 +207,9 @@ public:
   HomeScreen(UITask* task, mesh::RTCClock* rtc, SensorManager* sensors, NodePrefs* node_prefs)
      : _task(task), _rtc(rtc), _sensors(sensors), _node_prefs(node_prefs), _page(0),
        _shutdown_init(false), sensors_lpp(200) {  }
+       _shutdown_init(false), sensors_lpp(200) {  }
+
+  void showRecentPage() { _page = HomePage::RECENT; }
 
 #if UI_DISCOVER_SCREEN
   bool sendDiscoverRequest() {
@@ -802,9 +805,7 @@ void UITask::onMessageRecv(mesh::Packet *pkt, const ContactInfo &from, uint8_t t
   setCurrScreen(msg_preview);
 
   if (_display != NULL) {
-    if (!_display->isOn() && !hasConnection()) {
-      _display->turnOn();
-    }
+
     if (_display->isOn()) {
     _auto_off = millis() + AUTO_OFF_MILLIS;  // extend the auto-off timer
     _next_refresh = 100;  // trigger refresh
@@ -822,9 +823,7 @@ void UITask::onChannelMessageRecv(mesh::Packet *pkt, ChannelDetails& channel_det
   setCurrScreen(msg_preview);
 
   if (_display != NULL) {
-    if (!_display->isOn() && !hasConnection()) {
-      _display->turnOn();
-    }
+
     if (_display->isOn()) {
     _auto_off = millis() + AUTO_OFF_MILLIS;  // extend the auto-off timer
     _next_refresh = 100;  // trigger refresh
@@ -844,6 +843,15 @@ void UITask::onQueueSizeChanged(int msgcount) {
 }
 
 void UITask::onDiscoveredContact(ContactInfo &contact, bool is_new, uint8_t path_len, const uint8_t* path) {
+  if (is_new && contact.type == ADV_TYPE_REPEATER && _display != NULL) {
+    if (!_display->isOn()) {
+      ((HomeScreen *) home)->showRecentPage();
+      gotoHomeScreen();
+      _display->turnOn();
+    }
+    _auto_off = millis() + AUTO_OFF_MILLIS;
+    _next_refresh = 100;
+  }
   if (!hasConnection()) {
     notify(UIEventType::newContactMessage);
   }
