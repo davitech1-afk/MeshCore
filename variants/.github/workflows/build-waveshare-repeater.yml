@@ -1,0 +1,26 @@
+name: Build Waveshare Repeater
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install platformio
+      - name: Achar o env do repetidor
+        id: env
+        run: |
+          ENV=$(grep -ioE '^\[env:waveshare_rp2040_lora_repeater[^]]*\]' variants/waveshare_rp2040_lora/platformio.ini | head -1 | sed 's/\[env:\(.*\)\]/\1/')
+          echo "Env encontrado: $ENV"
+          if [ -z "$ENV" ]; then exit 1; fi
+          echo "name=$ENV" >> "$GITHUB_OUTPUT"
+      - run: pio run -e ${{ steps.env.outputs.name }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: waveshare-repeater
+          path: .pio/build/${{ steps.env.outputs.name }}/firmware.*
